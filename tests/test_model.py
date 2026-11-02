@@ -1,3 +1,4 @@
+
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
@@ -11,20 +12,27 @@ from starter.ml.model import (
 
 
 def test_train_model_returns_fitted_classifier():
+    """The training function should return a fitted classifier."""
     X_train = np.array([
-        [20, 1], [30, 0], [40, 1],
-        [50, 0], [60, 1], [70, 0],
+        [20, 1],
+        [30, 0],
+        [40, 1],
+        [50, 0],
+        [60, 1],
+        [70, 0],
     ])
     y_train = np.array([0, 0, 1, 1, 1, 0])
 
     model = train_model(X_train, y_train)
 
     assert isinstance(model, RandomForestClassifier)
+    assert hasattr(model, "predict")
     assert model.n_features_in_ == 2
     assert set(model.classes_) == {0, 1}
 
 
 def test_compute_model_metrics():
+    """Precision, recall, and F1 should match expected values."""
     y_true = np.array([1, 1, 0, 0])
     predictions = np.array([1, 0, 1, 0])
 
@@ -38,6 +46,7 @@ def test_compute_model_metrics():
 
 
 def test_compute_model_metrics_when_no_positive_predictions():
+    """Metrics should safely handle zero positive predictions."""
     y_true = np.array([1, 1, 0, 0])
     predictions = np.array([0, 0, 0, 0])
 
@@ -51,9 +60,14 @@ def test_compute_model_metrics_when_no_positive_predictions():
 
 
 def test_inference_returns_expected_predictions():
+    """Inference should return predictions with the expected shape."""
     X_train = np.array([
-        [0, 0], [0, 1], [1, 0],
-        [1, 1], [2, 0], [2, 1],
+        [0, 0],
+        [0, 1],
+        [1, 0],
+        [1, 1],
+        [2, 0],
+        [2, 1],
     ])
     y_train = np.array([0, 0, 0, 1, 1, 1])
 
@@ -66,9 +80,14 @@ def test_inference_returns_expected_predictions():
 
 
 def test_save_and_load_model_artifacts(tmp_path):
+    """All model artifacts and metadata should survive persistence."""
     X_train = np.array([
-        [0, 0], [0, 1], [1, 0],
-        [1, 1], [2, 0], [2, 1],
+        [0, 0],
+        [0, 1],
+        [1, 0],
+        [1, 1],
+        [2, 0],
+        [2, 1],
     ])
     y_train = np.array([0, 0, 0, 1, 1, 1])
 
@@ -92,7 +111,9 @@ def test_save_and_load_model_artifacts(tmp_path):
     assert label_binarizer == {"classes": [0, 1]}
     assert loaded_metadata == metadata
 
+    original_predictions = inference(model, X_train)
+    loaded_predictions = inference(loaded_model, X_train)
+
     np.testing.assert_array_equal(
-        inference(model, X_train),
-        inference(loaded_model, X_train),
+        original_predictions, loaded_predictions
     )

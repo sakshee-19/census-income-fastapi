@@ -1,207 +1,61 @@
 # Model Card: Census Income Classification
 
-For additional information, see the Model Cards paper:
-https://arxiv.org/abs/1810.03993
-
 ## Model Details
 
-- **Model name:** Census Income Classification Model
-- **Model type:** Supervised binary classification
-- **Algorithm:** Random Forest Classifier
-- **Framework:** Scikit-learn
-- **Target variable:** `salary`
-- **Prediction classes:** `<=50K` and `>50K`
-- **Positive class:** `>50K`
-- **Random state:** 42
-- **Number of estimators:** 150
-- **Minimum samples per leaf:** 2
-- **Class weighting:** `balanced_subsample`
-
-The model predicts whether an individual's annual income falls
-above or at/below the $50,000 threshold using demographic and
-employment-related Census features.
-
-Categorical variables are transformed using a fitted
-OneHotEncoder with `handle_unknown="ignore"`. The fitted encoder,
-label binarizer, classifier, and training metadata are persisted
-as model artifacts to support inference without retraining.
-
-The model was developed using Python 3.13 and scikit-learn 1.8.0.
+- **Model type:** Supervised binary classification using a scikit-learn `RandomForestClassifier`.
+- **Purpose:** Estimate which of two income categories (`<=50K` or `>50K`) is associated with a Census record, using the supplied demographic and employment-related features.
+- **Implementation:** The model is trained by `starter/train_model.py`; reusable training, inference, metric, and artifact-persistence functions are in `starter/ml/model.py`.
+- **Preprocessing:** The eight categorical features are one-hot encoded with a fitted `OneHotEncoder` (`handle_unknown="ignore"`). The target is encoded with a fitted `LabelBinarizer`. Continuous/integer columns are passed through without scaling.
+- **Training configuration:** 150 trees, `min_samples_leaf=2`, `class_weight="balanced_subsample"`, `random_state=42`, and `n_jobs=-1`.
+- **Artifact format:** The fitted estimator, encoder, label binarizer, and feature/metric metadata are saved separately as joblib files under `model/`.
 
 ## Intended Use
 
-The model is intended for educational and demonstration purposes,
-including:
+This model is an educational demonstration of a reproducible machine-learning workflow and a FastAPI inference service using the supplied Census income dataset. It can be used to demonstrate preprocessing, model training, evaluation, API integration, automated testing, and deployment.
 
-- Demonstrating an end-to-end machine learning workflow.
-- Learning model training, evaluation, and preprocessing.
-- Demonstrating prediction serving through a FastAPI application.
-- Exploring model performance across categorical feature groups.
-- Practicing automated testing and cloud deployment.
-
-The model is not intended for making decisions about individuals.
-
-It must not be used for employment, hiring, lending, credit
-decisions, insurance eligibility, housing, public benefits, or
-other consequential decisions.
-
-Predictions should not be interpreted as verified information
-about an individual's actual income.
+It is **not** intended for decisions about an individual's employment, compensation, credit, housing, insurance, eligibility, or access to services. It should not be used to make or justify consequential decisions about real people.
 
 ## Training Data
 
-The model uses the Census income dataset provided with this
-project in `data/census.csv`.
+The model uses the project-provided `data/census.csv` dataset. The supplied file contains 32,561 records and 15 columns: 14 input features and the `salary` target. The target classes in this file are `<=50K` (24,720 records) and `>50K` (7,841 records).
 
-- **Target column:** `salary`
-- **Input features:** 14 columns
-- **Categorical features:** 8
-- **Continuous/numeric features:** 6
+Leading/trailing whitespace is removed from string values before splitting. The target column is `salary`. The categorical input columns are `workclass`, `education`, `marital-status`, `occupation`, `relationship`, `race`, `sex`, and `native-country`. The remaining input columns are treated as numeric features.
 
-Categorical features:
-
-- `workclass`
-- `education`
-- `marital-status`
-- `occupation`
-- `relationship`
-- `race`
-- `sex`
-- `native-country`
-
-The remaining input features are numeric.
-
-Preprocessing includes:
-
-- Loading the CSV while handling whitespace after delimiters.
-- Trimming whitespace from categorical values.
-- Separating the target variable from input features.
-- One-hot encoding categorical features.
-- Binarizing the target labels.
-
-The dataset contains demographic and socioeconomic information.
-Such information can reflect historical inequalities and
-structural differences in access to income and opportunity.
-
-The model was trained on 80% of the available dataset using a
-stratified train/test split and random state 42.
+A stratified 80/20 train/test split is created with `random_state=42`. The encoder and label binarizer are fitted on the training partition only, then reused unchanged for the test partition and inference.
 
 ## Evaluation Data
 
-The remaining 20% of the dataset was held out for evaluation.
-
-The same fitted preprocessing objects used during training were
-applied to the evaluation data.
-
-The evaluation data was not used to fit the model.
-
-The held-out test set was also used to calculate performance
-metrics across categorical feature slices.
+Evaluation uses the held-out 20% test partition from the stratified split (6,513 records). The test partition is not used to fit the preprocessing objects or train the estimator. The reported metrics are from the run represented by the committed model artifacts and `slice_output.txt`.
 
 ## Metrics
 
-The following metrics were measured on the held-out test set.
+The following metrics were calculated on the held-out test partition:
 
 | Metric | Result |
 |---|---:|
-| Accuracy | 83.69% |
-| Precision | 62.15% |
-| Recall | 82.53% |
-| F1 score | 70.90% |
+| Accuracy | 0.8369 (83.69%) |
+| Precision | 0.6215 (62.15%) |
+| Recall | 0.8253 (82.53%) |
+| F1 score | 0.7090 (70.90%) |
 
-Metrics are calculated with `>50K` treated as the positive class.
-
-- **Accuracy:** Overall proportion of correct predictions.
-- **Precision:** Proportion of positive predictions that are
-  actually positive.
-- **Recall:** Proportion of actual positive cases identified
-  by the model.
-- **F1 score:** Harmonic mean of precision and recall.
-
-The model achieves 83.69% accuracy and 82.53% recall.
-Its lower precision of 62.15% indicates that a meaningful
-proportion of predicted higher-income cases are false positives.
-
-### Feature-Slice Evaluation
-
-Precision, recall, and F1 were also calculated separately for
-values within each of the eight categorical features.
-
-The results are recorded in `slice_output.txt`.
-
-Some observations from the held-out test set include:
-
-| Feature | Group | Rows | F1 |
-|---|---|---:|---:|
-| Race | Amer-Indian-Eskimo | 73 | 0.4444 |
-| Race | Asian-Pac-Islander | 200 | 0.6719 |
-| Race | Black | 662 | 0.6866 |
-| Race | White | 5,533 | 0.7126 |
-| Sex | Female | 2,158 | 0.7000 |
-| Sex | Male | 4,355 | 0.7105 |
-| Education | Bachelors | 1,096 | 0.7780 |
-| Education | HS-grad | 2,120 | 0.5686 |
-| Education | Prof-school | 114 | 0.8925 |
-| Relationship | Own-child | 1,032 | 0.3810 |
-| Relationship | Wife | 336 | 0.7423 |
-
-These results show that model performance varies across
-categorical groups.
-
-Some groups have very small sample sizes. Their precision,
-recall, and F1 scores may be unstable and should not be treated
-as reliable estimates of real-world performance.
-
-Slice metrics are descriptive evaluations. They do not, by
-themselves, establish whether the model is fair or unbiased.
+Precision, recall, and F1 are calculated for the positive class (`>50K`) with zero-division results set to zero. Accuracy is the proportion of correct predictions. Slice-level precision, recall, and F1 are calculated separately for each observed value of each of the eight categorical features; the results are recorded in `slice_output.txt`.
 
 ## Ethical Considerations
 
-The dataset contains sensitive demographic attributes,
-including race and sex, as well as socioeconomic and
-employment-related information.
+The dataset contains sensitive or potentially sensitive demographic attributes, including age, sex, and race, as well as employment and relationship information. These attributes and their correlations with income can encode historical and structural inequalities. Model predictions may therefore reproduce or amplify disparities present in the source data.
 
-Potential risks include:
+The overall metrics do not establish fairness. Slice metrics are provided as a basic diagnostic, not as proof of equitable performance. Some categories have very few test examples, making their metrics unstable or uninformative. A zero precision/recall/F1 score for a small slice should not be interpreted as a reliable estimate of population-level performance.
 
-- Historical bias in the source data may be learned by the model.
-- Differences in group representation may affect model quality.
-- Performance may vary substantially across demographic groups.
-- Small sample sizes can produce misleading subgroup metrics.
-- Income classification can reinforce socioeconomic stereotypes.
-- Predictions may be incorrectly treated as facts about
-  individuals.
-
-Although race and sex are included in the input data, excluding
-these features alone would not guarantee fairness because other
-features may act as proxies for sensitive attributes.
-
-The model has not undergone a comprehensive fairness audit,
-causal analysis, or assessment of real-world social impact.
-
-Human oversight, additional validation, and fairness testing
-would be necessary before considering any use beyond education.
+The model should not be used to rank, screen, profile, or make consequential decisions about individuals or groups. Before any research or operational use, data provenance, consent and lawful basis, representativeness, privacy, subgroup performance, disparate impact, and domain-specific risks would require independent review. Avoid exposing individual-level predictions or input records unnecessarily.
 
 ## Caveats and Recommendations
 
-1. This model is a learning project and should not be used for
-   real-world individual assessment or consequential decisions.
-2. The evaluation metrics describe performance on one held-out
-   split and may not generalize to other populations or time
-   periods.
-3. The model predicts an income category, not an exact income.
-4. Dataset labels and features may contain errors, omissions,
-   and historical biases.
-5. Performance varies across categorical feature groups.
-6. Metrics for groups with very few records are particularly
-   unreliable.
-7. The model has not been independently audited for fairness,
-   privacy, or security.
-8. Changes in population characteristics or economic conditions
-   may reduce prediction quality over time.
-9. Further work should include cross-validation, calibration,
-   fairness analysis, subgroup error analysis, and evaluation
-   on representative external data.
-
-The model should be treated as an educational demonstration
-of machine learning deployment rather than a production-ready
-income assessment system.
+- The supplied dataset is a historical snapshot and may not represent current populations, labor markets, income definitions, or economic conditions.
+- The target is a coarse binary income label; it does not represent a person's complete financial circumstances or worth.
+- The dataset is class-imbalanced. The reported precision and recall should be considered together rather than relying on accuracy alone.
+- The model is a Random Forest baseline, not a tuned or externally validated production model. No claim is made that it is optimal.
+- The evaluation is a single random holdout split. Additional cross-validation, temporal/external validation, calibration analysis, threshold analysis, and robust subgroup/fairness evaluation would be needed before drawing stronger conclusions.
+- Slice metrics can vary substantially for rare categories. Always inspect each slice's sample count alongside its metrics; do not overinterpret tiny groups.
+- One-hot encoding ignores previously unseen categories at inference time. This allows the API to accept unknown categories, but does not guarantee reliable predictions for them.
+- Input validation checks basic types and numeric bounds; it does not guarantee that every categorical value is valid or representative of the training data.
+- Re-train and re-evaluate when the source data, feature definitions, or intended deployment context changes. Keep the training data version, code version, model artifacts, and evaluation results together for reproducibility.

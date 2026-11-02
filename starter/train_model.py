@@ -66,8 +66,7 @@ def compute_slice_metrics(
 
 
 def main() -> None:
-    """Load data, train/evaluate the model, save artifacts
-    and slice metrics."""
+    """Train and evaluate the model, then save artifacts and slice metrics."""
     data = pd.read_csv(DATA_PATH, skipinitialspace=True)
     # Normalize surrounding whitespace without changing the dataset's columns.
     for column in data.select_dtypes(include="object").columns:
@@ -119,7 +118,7 @@ def main() -> None:
     }
     save_model_artifacts(model, encoder, label_binarizer, MODEL_DIR, metadata)
 
-    # Report slices for every categorical feature.
+    # Report slices for every categorical feature, as required by the rubric.
     slice_rows: list[dict[str, object]] = []
     for feature in CATEGORICAL_FEATURES:
         slice_rows.extend(
@@ -127,7 +126,6 @@ def main() -> None:
                 test, feature, model, encoder, label_binarizer
             )
         )
-
     slice_output = PROJECT_ROOT / "slice_output.txt"
     with slice_output.open("w", encoding="utf-8") as output:
         output.write("Census income model: test-set slice metrics\n")
@@ -138,10 +136,8 @@ def main() -> None:
         for row in slice_rows:
             output.write(
                 f"{row['feature']},{row['value']},{row['rows']},"
-                f"{row['precision']:.4f},{row['recall']:.4f},"
-                f"{row['f1']:.4f}\n"
+                f"{row['precision']:.4f},{row['recall']:.4f},{row['f1']:.4f}\n"
             )
-
     print(f"Saved model artifacts to {MODEL_DIR}")
     print(f"Saved slice metrics to {slice_output}")
 

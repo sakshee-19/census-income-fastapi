@@ -1,60 +1,269 @@
-Working in a command line environment is recommended for ease of use with git and dvc. If on Windows, WSL1 or 2 is recommended.
+# Census Income Classification API
 
-The repository root is the project root. Run installation, tests, DVC, and deployment commands from here. `requirements.txt`, `setup.py`, `main.py`, `sanitycheck.py`, and `data/census.csv` are at the root. `starter/` contains the Python package; for example, import `process_data` with `from starter.ml.data import process_data`.
+A machine learning project that predicts whether an individual's annual income is above or at or below $50K using demographic and employment information from the U.S. Census dataset.
 
-The training script and API are exercises to complete. Once implemented, run the training script with `python -m starter.train_model` and serve the API from the root with `uvicorn main:app`. Run the rubric helper from the root with `python sanitycheck.py tests` after writing API tests.
+The project includes data preprocessing, model training, evaluation across categorical feature slices, a trained Random Forest model, a FastAPI prediction service, automated tests, and GitHub Actions CI.
 
-# Environment Set up
-* **Option 1: Using pip and venv (Recommended)**
-    * Ensure you have Python 3.13 installed
-    * Create virtual environment: `python3.13 -m venv .venv`
-    * Activate environment: `source .venv/bin/activate` (On Windows: `.venv\Scripts\activate`)
-    * From the repository root, install dependencies: `pip install -r requirements.txt`
-    * Install the local package: `pip install -e .`
+**GitHub Repository:** https://github.com/sakshee-19/census-income-fastapi
 
-* **Option 2: Using conda**
-    * Download and install conda if you don't have it already.
-    * conda create -n [envname] "python=3.13" scikit-learn pandas numpy pytest jupyter jupyterlab fastapi uvicorn pydantic httpx matplotlib seaborn -c conda-forge
-    * Install git either through conda ("conda install git") or through your CLI, e.g. sudo apt-get git.
-    * From the repository root, install the local package: `pip install -e .`
+## Project Overview
 
-## Repositories
-* Create a directory for the project and initialize git.
-    * As you work on the code, continually commit changes. Trained models you want to use in production must be committed to the repository you submit.
-* Connect your local Git repository to GitHub or Azure Repos, following the corresponding course workflow.
-* Set up GitHub Actions or Azure Pipelines on your repository. You can use one of the pre-made GitHub Actions if at a minimum it runs pytest and flake8 on push and requires both to pass without error.
-    * Make sure you configure CI to use Python 3.13 (same version as development).
-    * Note: Add flake8 to requirements.txt if you want to use it for linting: `pip install flake8`
+This project uses the Census Income dataset to train a binary classification model.
 
-# Data
-* Use `data/census.csv`. DVC is optional; follow the course workflow you selected.
-* This data is messy, try to open it in pandas and see what you get.
-* To clean it, use your favorite text editor to remove all spaces.
+The model predicts one of two classes:
 
-# Model
-* Using the starter code, write a machine learning model that trains on the clean data and saves the model. Complete any function that has been started.
-* Include the final trained model and all fitted preprocessing artifacts needed for inference (such as the encoder and label binarizer) in the submitted repository/files, whether saved as `.pkl`, `.joblib`, or another format. Verify that a fresh clone or extracted submission can load them and run inference without retraining.
-* If a required artifact is ignored, add only that file with `git add -f path/to/artifact.pkl` (using its actual path). Review the staged files before committing and pushing.
-* Write unit tests for at least 3 functions in the model code.
-* Write a function that outputs the performance of the model on slices of the data.
-    * Suggestion: for simplicity, the function can just output the performance on slices of just the categorical features.
-* Write a model card using the provided template.
+- `<=50K` — Annual income at or below $50K.
+- `>50K` — Annual income above $50K.
 
-# API Creation
-*  Create a RESTful API using FastAPI this must implement:
-    * GET on the root giving a welcome message.
-    * POST that does model inference.
-    * Type hinting must be used.
-    * Use a Pydantic model to ingest the body from POST. This model should contain an example.
-        * * Hint: the data has names with hyphens and Python does not allow those as variable names. Do not modify the column names in the csv and instead use the functionality of FastAPI/Pydantic/etc to deal with this.
-* Write 3 unit tests to test the API (one for the GET and two for POST, one that tests each prediction).
+The trained model and preprocessing artifacts are saved in the repository. A fresh clone can load these artifacts and serve predictions without retraining.
 
-# API Deployment
-* Use Render, Heroku, or another cloud application platform that meets the rubric. Heroku no longer offers its former free tier; check your provider's pricing.
-* Use the repository root as the deployment root; it contains `requirements.txt` and `main.py`.
-* Deploy only tested code from the protected `main` or `master` branch, after both `pytest` and `flake8` pass. Use the same Python version as development.
-    * **GitHub:** use a provider integration or GitHub Actions workflow with automatic deployment gated on successful CI.
-    * **Azure DevOps:** use an `azure-pipelines.yml` deployment stage that depends on successful CI and runs only for the protected `main` branch. Keep Azure Repos as the source repository.
-* Store deployment credentials in authorized secrets, never in project files or pipeline YAML. Follow the course's GitHub to Azure DevOps Translation Guide for platform-specific setup.
-* Account for local and hosted path differences, and run tests and lint locally before pushing.
-* Write a script using `requests` to POST to the deployed API and print the prediction and HTTP status code. Include the rubric's required deployment and live-request screenshots.
+This is an educational demonstration, not a system intended for employment, lending, insurance, or other consequential decisions.
+
+## Technology Stack
+
+- Python 3.13
+- pandas and NumPy
+- scikit-learn
+- FastAPI and Pydantic
+- Uvicorn
+- pytest
+- Flake8
+- GitHub Actions
+
+## Repository Structure
+
+```text
+.
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── data/
+│   └── census.csv
+├── model/
+│   ├── model.joblib
+│   ├── encoder.joblib
+│   ├── label_binarizer.joblib
+│   └── metadata.joblib
+├── screenshots/
+├── starter/
+│   ├── ml/
+│   │   ├── data.py
+│   │   └── model.py
+│   └── train_model.py
+├── tests/
+│   ├── test_api.py
+│   └── test_model.py
+├── live_post.py
+├── main.py
+├── model_card.md
+├── requirements.txt
+├── sanitycheck.py
+├── setup.py
+└── slice_output.txt
+```
+
+## Environment Setup
+
+Python 3.13 is used for development and CI.
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/sakshee-19/census-income-fastapi.git
+cd census-income-fastapi
+```
+
+### 2. Create and activate a virtual environment
+
+```bash
+python3.13 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3. Install dependencies
+
+```bash
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+python -m pip install -e .
+```
+
+## Model Training
+
+The training script loads `data/census.csv`, preprocesses the data, trains a Random Forest classifier, evaluates its performance, and saves the fitted model and preprocessing artifacts.
+
+Run:
+
+```bash
+python -m starter.train_model
+```
+
+The command generates or updates:
+
+- `model/model.joblib`
+- `model/encoder.joblib`
+- `model/label_binarizer.joblib`
+- `model/metadata.joblib`
+- `slice_output.txt`
+
+The training script uses a stratified train/test split with a fixed random seed for reproducibility.
+
+## Model Evaluation
+
+The latest training run produced the following results on the held-out test set:
+
+| Metric | Result |
+|---|---:|
+| Accuracy | 83.69% |
+| Precision | 62.15% |
+| Recall | 82.53% |
+| F1 score | 70.90% |
+
+The `>50K` class is treated as the positive class.
+
+### Feature-Slice Evaluation
+
+Precision, recall, and F1 are also calculated for individual values across the eight categorical features.
+
+The generated results are available in:
+
+```text
+slice_output.txt
+```
+
+The model card documents the evaluation methodology, performance, intended use, limitations, and ethical considerations:
+
+```text
+model_card.md
+```
+
+## Running the API
+
+Start the FastAPI application from the repository root:
+
+```bash
+uvicorn main:app --reload
+```
+
+The API will be available at:
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/` | GET | API welcome information |
+| `/predict` | POST | Predict an income category |
+| `/docs` | GET | Interactive Swagger API documentation |
+
+### Example prediction request
+
+Send a POST request to `/predict` with the following JSON:
+
+```json
+{
+  "age": 39,
+  "workclass": "State-gov",
+  "fnlgt": 77516,
+  "education": "Bachelors",
+  "education-num": 13,
+  "marital-status": "Never-married",
+  "occupation": "Adm-clerical",
+  "relationship": "Not-in-family",
+  "race": "White",
+  "sex": "Male",
+  "capital-gain": 2174,
+  "capital-loss": 0,
+  "hours-per-week": 40,
+  "native-country": "United-States"
+}
+```
+
+Example response:
+
+```json
+{
+  "prediction": "<=50K",
+  "prediction_label": "Income at or below $50K"
+}
+```
+
+The API validates incoming data using Pydantic and returns a validation error for invalid inputs.
+
+## Running Tests
+
+Run the complete test suite:
+
+```bash
+python -m pytest -v
+```
+
+The tests cover model training, metric calculation, inference, artifact persistence, API health, and predictions for both income classes.
+
+Run the Udacity sanity checker:
+
+```bash
+python sanitycheck.py tests
+```
+
+## Code Quality
+
+Run Flake8 while excluding the virtual environment and generated directories:
+
+```bash
+python -m flake8 . --count --show-source --statistics --exclude=.venv,.git,__pycache__,build,dist
+```
+
+## GitHub Actions — Continuous Integration
+
+The project uses GitHub Actions to automate testing and code-quality checks.
+
+Workflow location:
+
+```text
+.github/workflows/ci.yml
+```
+
+The workflow is configured to run on pushes and pull requests targeting `main` or `master`.
+
+It performs the following steps:
+
+1. Checks out the repository.
+2. Sets up Python 3.13.
+3. Installs project dependencies.
+4. Runs pytest.
+5. Runs Flake8.
+
+Both tests and lint checks must pass for the CI workflow to succeed.
+
+## Live API Request
+
+The `live_post.py` script sends a sample Census record to a deployed API.
+
+Set the API URL and execute:
+
+```bash
+API_URL="https://YOUR-DEPLOYED-API-URL" python live_post.py
+```
+
+The script prints the HTTP status code and prediction response.
+
+## Screenshots
+
+The `screenshots/` directory is intended to contain the required project evidence:
+
+- `example.png` — Project implementation or example output.
+- `continuous_deployment.png` — Successful CI/CD workflow.
+- `live_get.png` — Live API GET endpoint response.
+- `live_post.png` — Live API prediction response.
+
+## Limitations and Responsible Use
+
+The model learns patterns from historical Census data. Its predictions may reflect biases and limitations present in the original dataset.
+
+Performance varies across demographic and other categorical groups. Some groups have limited test samples, making their measured performance less reliable.
+
+The model should be used for educational and experimental purposes only. It should not be used to make decisions about individuals.
+
+Refer to [model_card.md](model_card.md) for the complete model documentation and evaluation details.
+
+## License
+
+See [LICENSE.txt](LICENSE.txt).

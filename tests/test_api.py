@@ -1,3 +1,4 @@
+
 """Integration tests for the FastAPI application."""
 
 from fastapi.testclient import TestClient
